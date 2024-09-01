@@ -5,7 +5,7 @@
   import BrightnessSlider from './components/Slider.vue'
   import PresetList       from './components/PresetList.vue'
   import FxList           from './components/FxList.vue'
-  import BleConnect       from './components/Connect.vue'
+  import BleConnect       from './components/BleConnect.vue'
 
   ///////////////////// NEW
 
