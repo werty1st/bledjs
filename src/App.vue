@@ -1,20 +1,12 @@
 <script setup>
   import {ref, watch} from "vue"
   import BIcon from './components/b-icon.vue'
-  import XNav from './components/nav.vue'
-  import XConnect from './components/connect.vue'
-  import BlogPost from './components/button.vue'
+  import BleConnect from './components/Connect.vue'
+  import WledPower from './components/Power.vue'
+  import BrightnessSlider from './components/Slider.vue'
+  import PresetList from './components/PresetList.vue'
+  import FxList from './components/FxList.vue'
 
-
-  const posts = ref([
-    { id: 1, title: 'My journey with Vue' },
-    { id: 2, title: 'Blogging with Vue' },
-    { id: 3, title: 'Why Vue is so fun' }
-  ])
-  const postFontSize = ref(1)
-  function knusperFx(params) {
-    console.log("knusperFX", params.value)
-  }
 
 
   const connected = ref(false)
@@ -24,19 +16,19 @@
   var device = false
   var gatt = false
   var service = false
-  var getPresetListCharacteristic = false
-  var setPresetCharacteristic = false
-  var brightnessCharacteristic = false
-  var powerCharacteristic = false
+  //var getPresetListCharacteristic = false
+  //var setPresetCharacteristic = false
+  //var brightnessCharacteristic = false
+  //var powerCharacteristic = false
 
   var powerState = ref(false)
   var brightness = ref(0)
 
-  const PRIMARY_SERVICE_UUID           = "b2bbc642-46da-11ed-b878-0242ac120002"
-  const PRESETLIST_CHARACTERISTIC_UUID = "c9af9c76-46de-11ed-b878-0242ac120002"
-  const PRESET_CHARACTERISTIC_UUID     = "c9af9c76-56de-11ed-b878-0242ac120002"
-  const BRIGHTNESS_CHARACTERISTIC_UUID = "c9af9c76-76de-11ed-b878-0242ac120002"
-  const POWER_CHARACTERISTIC_UUID      = "c9af9c76-66de-11ed-b878-0242ac120002"
+  // const PRIMARY_SERVICE_UUID           = "b2bbc642-46da-11ed-b878-0242ac120002"
+  // const PRESETLIST_CHARACTERISTIC_UUID = "c9af9c76-46de-11ed-b878-0242ac120002"
+  // const PRESET_CHARACTERISTIC_UUID     = "c9af9c76-56de-11ed-b878-0242ac120002"
+  // const BRIGHTNESS_CHARACTERISTIC_UUID = "c9af9c76-76de-11ed-b878-0242ac120002"
+  // const POWER_CHARACTERISTIC_UUID      = "c9af9c76-66de-11ed-b878-0242ac120002"
 
 
   function throttle(fn, wait){
@@ -81,65 +73,6 @@
     console.log('> ' + a.join(' '));
   }
 
-  async function connect() {
-
-    function onDisconnected(){
-      console.log('> Bluetooth Device disconnected')
-    }
-
-
-    if (connected.value == true) {
-
-      if (device.gatt.connected) {
-        device.gatt.disconnect();
-      } else {
-        log('> Bluetooth Device is already disconnected')
-      }
-      connected.value = false
-    } else {
-
-      device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [PRIMARY_SERVICE_UUID] }],
-      })
-      device.addEventListener('gattserverdisconnected', onDisconnected)
-      gatt = await device.gatt.connect()
-      service = await gatt.getPrimaryService(PRIMARY_SERVICE_UUID)
-
-      const characteristics = await service.getCharacteristics()
-
-      // for await (const characteristic of characteristics) {
-      //   console.log("xxx", characteristic)
-      // }
-
-      getPresetListCharacteristic = await service.getCharacteristic(PRESETLIST_CHARACTERISTIC_UUID)    
-      setPresetCharacteristic     = await service.getCharacteristic(PRESET_CHARACTERISTIC_UUID)
-      brightnessCharacteristic    = await service.getCharacteristic(BRIGHTNESS_CHARACTERISTIC_UUID)
-      powerCharacteristic         = await service.getCharacteristic(POWER_CHARACTERISTIC_UUID)
-
-
-      //subscribe powerState
-      powerCharacteristic.startNotifications().then(()=>{
-        console.log('subscribed')
-        powerCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications)
-      })
-      brightnessCharacteristic.startNotifications().then(()=>{
-        console.log('subscribed')
-        brightnessCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications)
-      })
-
-      //read current powerState
-      powerState.value = !!(await powerCharacteristic.readValue()).getUint8(0)
-
-      //read bri
-      brightness.value = (await brightnessCharacteristic.readValue()).getUint8(0)
-
-      console.log(brightness)
-      
-      loadPresets()
-      connected.value = true
-      
-    }
-  }
 
   async function activatePreset( id ){
     console.log("selected preset:", id)
@@ -186,28 +119,46 @@
     await brightnessCharacteristic.writeValue( Uint8Array.of([bri]) )
   }
 
-
-
-
   watch(brightness, (newX) => {
     //const b2 = throttle(setBrightness, 500)
     //console.log(`x is ${newX}`)
     throttle(setBrightness, 500)(newX)
   })
 
+  ///////////////////// NEW
+
+  const bleDevice = ref(null)
+  const powerCharacteristic         = ref(null)
+  const brightnessCharacteristic    = ref(null)
+  const getPresetListCharacteristic = ref(null)
+  const setPresetCharacteristic     = ref(null)
+  const getFxCharacteristic         = ref(null)
+  const setFxCharacteristic         = ref(null)
+  const isConnected = ref(false)
+
+  //received BLE Device Instance
+  function BleDevice(dev){    
+    bleDevice.value = dev
+    powerCharacteristic.value         = dev.characteristics.powerCharacteristic
+    brightnessCharacteristic.value    = dev.characteristics.brightnessCharacteristic
+    getPresetListCharacteristic.value = dev.characteristics.getPresetListCharacteristic
+    setPresetCharacteristic.value     = dev.characteristics.setPresetCharacteristic
+    getFxCharacteristic.value         = dev.characteristics.getFxCharacteristic
+    setFxCharacteristic.value         = dev.characteristics.setFxCharacteristic
+    isConnected.value = true
+  }
+
+  function onDisconnect(state){
+    console.log("isConnected", state)
+    isConnected.value = false
+  }
+
+
 </script>
 
 <template>
   <!-- <x-nav title="xxx"></x-nav> -->
-  <div :style="{ fontSize: postFontSize + 'em' }">
-  <BlogPost
-    v-for="post in posts"
-    :key="post.id"
-    :title="post.title"
-    @enlarge-text="postFontSize += 0.1"
-    @knusper="knusperFx"
-   />
-</div>
+
 
   <div class="left"></div>
   <div class="container remote-container">
@@ -215,40 +166,33 @@
     <!-- <b-icon name="lock-fill" /> -->
 
     <div class="text-center mb-4">
-      <x-connect title="xxx"></x-connect>
-
-      <button id="connectButton"
-              class="btn btn-primary btn-lg w-100"
-              @click="connect"
-              >
-        <i id="connectIcon" class="bi bi-lightning-fill"></i>
-        {{ !connected?"CONNECT":"DISCONNECT" }}
-      </button>
-
+      <BleConnect @BleDevice="BleDevice" @onDisconnect="onDisconnect" :isConnected="isConnected" />
+    </div>
+  
+    <div class="text-center mb-4">
+      <WledPower :powerCharacteristic="powerCharacteristic" :disabled="!isConnected"/>
     </div>
 
-    <div class="button-container">
-      <button id="powerButton"
-              @click="toogleWled"
-              :disabled="!connected"
-              :class="{ active: powerState }"
-              class="btn btn-danger control-button">
-          <i class="bi bi-power"></i> Power
-      </button>
+    <div class="text-center mb-4">
+      <BrightnessSlider :brightnessCharacteristic="brightnessCharacteristic" :disabled="!isConnected"/>
     </div>
 
-    <div class="slider-container">
-      <label for="brightness" class="form-label">Brightness</label>
-      <input type="range"
-            id="brightness"
-            :disabled="!connected"
-            :value="brightness"
-            @input="({ target }) => (brightness = parseFloat(target.value))"
-            class="form-range"
-            min="5" max="255" step="1">
+    <div class="text-center mb-4">
+      <PresetList
+      :disabled="!isConnected"
+      :getPresetListCharacteristic="getPresetListCharacteristic"
+      :setPresetCharacteristic="setPresetCharacteristic"
+      />
     </div>
 
-    <PresetList :presets="presets" @selectPreset="activatePreset"/>
+
+    <!-- <div class="text-center mb-4">
+      <FxList
+      :disabled="!isConnected"
+      :getFxCharacteristic="getFxCharacteristic"
+      :setFxCharacteristic="setFxCharacteristic"
+      />
+    </div> -->
 
   </div>
   <div class="right"></div>
