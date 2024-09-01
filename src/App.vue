@@ -1,11 +1,11 @@
 <script setup>
   import {ref, watch} from "vue"
   import BIcon from './components/b-icon.vue'
-  import BleConnect from './components/Connect.vue'
-  import WledPower from './components/Power.vue'
-  import BrightnessSlider from './components/Slider.vue'
-  import PresetList from './components/PresetList.vue'
-  import FxList from './components/FxList.vue'
+  import BleConnect from '@/components/Connect.vue'
+  import WledPower from '@/components/Power.vue'
+  import BrightnessSlider from '@/components/Slider.vue'
+  import PresetList from '@/components/PresetList.vue'
+  import FxList from '@/components/FxList.vue'
 
   ///////////////////// NEW
 
