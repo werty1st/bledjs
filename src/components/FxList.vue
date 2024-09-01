@@ -42,17 +42,16 @@ watch( [ ()=>props.getFxCharacteristic ], async ([getFxCharacteristic])=>{
         if (text != "reset") {
             fragments.push(text)
             //request next fragment
-            console.log( "requesting next fragmet:", fragments.length )
+            //console.log( "requesting next fragmet:", fragments.length )
             setTimeout( async ()=>{
                 await getFxCharacteristic.writeValue( Uint8Array.of([ fragments.length ]) )
             }, 100)
         } else {
             let tempstr = fragments.join("")
-            console.log(tempstr)
             effects.value = JSON.parse( tempstr ).filter(v=>v!="RSVD")
             fragments.length = 0
         }
-        console.log("FxFragmet", text)
+        //console.log("FxFragmet", text)
     };
 
     // Install notification handler first
@@ -60,7 +59,7 @@ watch( [ ()=>props.getFxCharacteristic ], async ([getFxCharacteristic])=>{
 
     // Start notifications
     await getFxCharacteristic.startNotifications();
-    console.log('subscribed getFxCharacteristic');
+    console.log('subscribed');
 
     // Perform the first write operation after the event handler and notifications are set up
     await getFxCharacteristic.writeValue(Uint8Array.of([parseInt(0)]));
@@ -72,9 +71,9 @@ watch( [ ()=>props.getFxCharacteristic ], async ([getFxCharacteristic])=>{
 
 
 async function applyFx(fxId) {
-   //getFxCharacteristic
-   console.log("FX id:", fxId)
-   await props.setFxCharacteristic.writeValue(Uint8Array.of([parseInt(fxId)]));
+    //getFxCharacteristic
+    console.log("FX id:", fxId)
+    await props.setFxCharacteristic.writeValue(Uint8Array.of([parseInt(fxId)]));
 }
 
 </script>
