@@ -22,14 +22,15 @@ import { handleNotifications } from '@/shared/notificationHandler'
 const props = defineProps({
     getPresetListCharacteristic: Object,
     setPresetCharacteristic: Object,
-    disabled: Boolean
+    disabled: Boolean,
 })
 
 const presets = ref([])
 
 //on Change set Listener
-watch( [ ()=>props.getPresetListCharacteristic, () => props.disabled ], async ([getPresetListCharacteristic, disabled])=>{
+watch( [ ()=>props.getPresetListCharacteristic, () => props.disabled], async ([getPresetListCharacteristic, disabled])=>{
     
+
     if (disabled){
         presets.value = []
     } else {

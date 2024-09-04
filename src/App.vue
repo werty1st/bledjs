@@ -7,6 +7,10 @@
   import FxList           from './components/FxList.vue'
   import BleConnect       from './components/BleConnect.vue'
 
+  import {Mutex, Semaphore, withTimeout} from 'async-mutex';
+  const mutex = new Mutex();
+
+
   ///////////////////// NEW
 
   const bleDevice = ref(null)
@@ -17,17 +21,51 @@
   const getFxCharacteristic         = ref(null)
   const setFxCharacteristic         = ref(null)
   const isConnected = ref(false)
+  const myMutex = ref(mutex)
 
   //received BLE Device Instance
-  function BleDevice(dev){    
-    bleDevice.value = dev
-    powerCharacteristic.value         = dev.characteristics.powerCharacteristic
-    brightnessCharacteristic.value    = dev.characteristics.brightnessCharacteristic
-    getPresetListCharacteristic.value = dev.characteristics.getPresetListCharacteristic
-    setPresetCharacteristic.value     = dev.characteristics.setPresetCharacteristic
-    getFxCharacteristic.value         = dev.characteristics.getFxCharacteristic
-    setFxCharacteristic.value         = dev.characteristics.setFxCharacteristic
+  async function BleDevice(dev){    
+    
+    const SLEEP = 500
+
     isConnected.value = true
+
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      bleDevice.value = dev
+    })
+
+    console.log("Loading powerCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      powerCharacteristic.value         = dev.characteristics.powerCharacteristic
+    })
+    console.log("Loading brightnessCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      brightnessCharacteristic.value    = dev.characteristics.brightnessCharacteristic
+    })
+    console.log("Loading getPresetListCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      getPresetListCharacteristic.value = dev.characteristics.getPresetListCharacteristic
+    })    
+    console.log("Loading setPresetCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      setPresetCharacteristic.value     = dev.characteristics.setPresetCharacteristic
+    })    
+    console.log("Loading setFxCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      setFxCharacteristic.value         = dev.characteristics.setFxCharacteristic
+    })
+    console.log("Loading getFxCharacteristic")
+    await mutex.runExclusive(async () => {
+      await sleeping(SLEEP)
+      getFxCharacteristic.value         = dev.characteristics.getFxCharacteristic
+    })
+
   }
 
   function onDisconnect(state){
@@ -35,6 +73,11 @@
     isConnected.value = false
   }
 
+  function sleeping(wait){
+    return new Promise((resolve,reject)=>{
+        setTimeout(()=>resolve(),wait)
+    })
+  }
 
 </script>
 
@@ -48,20 +91,21 @@
     <!-- <b-icon name="lock-fill" /> -->
 
     <div class="text-center mb-4">
-      <BleConnect @BleDevice="BleDevice" @onDisconnect="onDisconnect" :isConnected="isConnected" />
+      <BleConnect @BleDevice="BleDevice" @onDisconnect="onDisconnect" :isConnected="isConnected"  />
     </div>
   
     <div class="text-center mb-4">
-      <WledPower :powerCharacteristic="powerCharacteristic" :disabled="!isConnected"/>
+      <WledPower :powerCharacteristic="powerCharacteristic" :disabled="!isConnected"  />
     </div>
 
     <div class="text-center mb-4">
-      <BrightnessSlider :brightnessCharacteristic="brightnessCharacteristic" :disabled="!isConnected"/>
+      <BrightnessSlider :brightnessCharacteristic="brightnessCharacteristic" :disabled="!isConnected"  />
     </div>
 
     <div class="text-center mb-4">
       <PresetList
       :disabled="!isConnected"
+      
       :getPresetListCharacteristic="getPresetListCharacteristic"
       :setPresetCharacteristic="setPresetCharacteristic"
       />
@@ -71,6 +115,7 @@
     <div class="text-center mb-4">
       <FxList
       :disabled="!isConnected"
+      
       :getFxCharacteristic="getFxCharacteristic"
       :setFxCharacteristic="setFxCharacteristic"
       />

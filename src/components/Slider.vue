@@ -19,25 +19,36 @@ import { throttle } from '@/shared/throttle'
 //receive brightnessCharacteristic and connection State
 const props = defineProps({
     brightnessCharacteristic: Object,
-    disabled: Boolean
+    disabled: Boolean,
 })
 
 //track power On/Off
 const brightness = ref(0)
 
 //on Change set Listener
-watch( ()=>props.brightnessCharacteristic, async (brightnessCharacteristic)=>{
+watch( [()=>props.brightnessCharacteristic ], async ([brightnessCharacteristic])=>{
+
 
     brightness.value = (await brightnessCharacteristic.readValue()).getUint8(0)
 
-    // todo: fix memory leak
-    brightnessCharacteristic.startNotifications().then(() => {
-        console.log('subscribed')
+
+
+    brightnessCharacteristic.startNotifications().then(async () => {
+    console.log('subscribed')
+
+
         brightnessCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications(value=>{
             brightness.value = value.getUint8(0)
             console.log("Changed Brightness Remotely", brightness.value)
         }))
-    })
+
+
+    })        
+        
+    
+
+    // todo: fix memory leak
+
 
 })
 

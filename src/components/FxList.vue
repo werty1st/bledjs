@@ -29,9 +29,13 @@ const effects = ref([])
 const fragments = []
 
 //on Change set Listener
-watch( [ ()=>props.getFxCharacteristic ], async ([getFxCharacteristic])=>{
+watch( [ ()=>props.getFxCharacteristic, () => props.disabled ], async ([getFxCharacteristic, disabled])=>{
 
 
+    if (disabled){
+        effects.value = []
+        return
+    }
     //write chunkIndex
     //read chunk, chunkIndex++ until chunk == "reset"
     //readFx( getFxCharacteristic )
@@ -45,7 +49,7 @@ watch( [ ()=>props.getFxCharacteristic ], async ([getFxCharacteristic])=>{
             //console.log( "requesting next fragmet:", fragments.length )
             setTimeout( async ()=>{
                 await getFxCharacteristic.writeValue( Uint8Array.of([ fragments.length ]) )
-            }, 100)
+            }, 500)
         } else {
             let tempstr = fragments.join("")
             effects.value = JSON.parse( tempstr ).filter(v=>v!="RSVD")
